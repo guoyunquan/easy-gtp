@@ -10,7 +10,14 @@
     "build": "node build/build.js"
   },
   "dependencies": {
+    "axios": "^1.4.0",
+    "highlight.js": "^11.8.0",
+    "highlightjs-line-numbers.js": "^2.8.0",
+    "markdown-it": "^13.0.1",
+    "marked": "^0.8.2",
     "vue": "^2.5.2",
+    "vue-markdown": "^2.2.4",
+    "vue-native-websocket": "^2.0.15",
     "vue-router": "^3.0.1"
   },
   "devDependencies": {

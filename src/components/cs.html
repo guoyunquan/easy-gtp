@@ -1,0 +1,107 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <title>Title</title>
+</head>
+<body>
+<div>
+  <div>
+    <input type="text" id="myInput" placeholder="请输入">
+  </div>
+  <button onclick="sendAnswer()">
+    点击我
+  </button>
+</div>
+<script type="application/javascript">
+  function sendAnswer() {
+    const inputValue = document.getElementById('myInput').value;
+    sendAnswers(inputValue)
+  };
+
+  function sendAnswers(content) {
+    console.log("结果：",content)
+    // 请求的body体
+    const data = JSON.stringify({
+      model: 'gpt-3.5-turbo',
+      messages: [{role: 'user', content: content}],
+      stream: true
+    })
+    const headers = {
+      'Authorization': `Bearer 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`,
+      'Content-Type': 'application/json'
+    };
+    fetch('https://api.openai.com/v1/chat/completions', {
+      method: 'POST',
+      // 这个headers包括 "Content-Type"："application/json" 和 "Authorization", `Bearer ${key}`
+      // 其中这个key是你的登录密钥
+      headers: headers,
+      body: JSON.stringify({
+        model: 'gpt-3.5-turbo',
+        messages: [{role: 'user', content: content}],
+        // 启用流式处理
+        stream: true
+      }),
+    })
+      .then(response => {
+
+        // 创建一个可读取响应体数据的读取器对象
+        const reader = response.body.getReader();
+        let buffer = '';
+        // 这一部分是创建了一个装回复聊天信息的盒子
+        const layoutBox = document.createElement("div");
+        layoutBox.classList.add("layout");
+        // dialogue 是创建的一个大的父盒子的名称
+        dialogue.appendChild(layoutBox);
+        const answerBox = document.createElement("span")
+        answerBox.classList.add("answerList", "list")
+        layoutBox.appendChild(answerBox)
+
+        // 因为流式输出会逐个字出来，所以定义 answers 存放回复的消息，不存放的话后续用innerHTML插入的时候会被覆盖，只显示最后一个字符
+        let answers = [];
+        // 这是一个JavaScript Promise的语法，表示当读取器(reader)读取完成后，执行一个函数(processResult）来处理结果(result)
+        return reader.read().then(function processResult(result) {
+          // 解码，并将解码后的数据存放到buffer
+          buffer += new TextDecoder().decode(result.value || new Uint8Array(),
+            {stream: !result.done});
+          // 这是以换行符将字符串分为多个部分，并过滤掉以[DONE]结尾的部分
+          const parts = buffer.split('\n').filter(part => !part.endsWith('[DONE]'));
+          ;
+          buffer = parts.pop();
+          for (const part of parts) {
+            if (part.trim()) {
+              try {
+                const response = JSON.parse(part.slice('data:'.length));
+                console.log(response.choices[0].delta.content);
+                answerContent = response.choices[0].delta.content;
+                // 将内容存放到数组中，这个判断是answerContent 开头和结尾存在JSON解析不成功的部分，会在聊天记录的开始和结尾显示undefined
+                if (answerContent !== undefined) {
+                  answers.push(answerContent)
+                }
+              } catch (error) {
+                console.error(`Failed to parse JSON: ${error.message}`);
+                continue;
+              }
+
+            }
+          }
+          // 将数组中的内容以html的形式插入到聊天回复框中，如果不加join("")数组中的每一个字符都会被逗号隔开
+          // 引入第三方库 marked 进行markdown格式化   import {marked} from "marked";
+          answerBox.innerHTML = marked(answers.join(""), {
+            headerIds: false,
+            mangle: false
+          });
+          // 引入第三方库 hljs ，实现代码块高亮   import hljs from 'highlight.js'
+          hljs.highlightAll();
+
+          if (result.done) {
+            return;
+          }
+          return reader.read().then(processResult);
+        })
+      })
+  }
+
+</script>
+</body>
+</html>
