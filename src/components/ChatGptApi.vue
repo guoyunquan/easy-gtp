@@ -46,7 +46,7 @@ export default {
       axios.post('https://api.openai.com/v1/chat/completions', data,
         {
           headers: {
-            'Authorization': `Bearer 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`,
+            'Authorization': `Bearer sk-d***********kFJpyOD7ABn3AOUOPH0sQuU`,
             'Content-Type': 'application/json'
           },
           timeout: 250000
